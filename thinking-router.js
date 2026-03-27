@@ -98,7 +98,7 @@ function buildDefaultHeuristics() {
       }
     },
     routeOverride: {
-      systemDomainExplain: "(?:配置|fallback|设置|模型|思考强度|router|routing|session|thread|hook|gateway|auth|credential|Gemini|model|A0|A1|A|B|C)",
+      systemDomainExplain: "(?:配置|fallback|设置|模型|思考强度|router|routing|session|thread|hook|gateway|auth|credential|Gemini|model)",
       debugAuditTask: "(?:检查|排查|解决|修复|debug|看看|审查|验证|核对|看一下|看下|调试|修改|分析)"
     },
     intent: {

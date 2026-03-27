@@ -19,6 +19,7 @@ process.env.THINKING_ROUTER_LOG_PATH = path.join(STATE_DIR, 'thinking-router.log
 process.env.THINKING_ROUTER_PATCH_LOCKS_DIR = path.join(STATE_DIR, 'thinking-router-patch-locks');
 process.env.THINKING_ROUTER_AGENT_SESSIONS_DIR = SESSIONS_DIR;
 process.env.THINKING_ROUTER_SESSION_INDEX_PATH = SESSION_INDEX_PATH;
+process.env.ROUTER_CONFIG_PATH = path.join(__dirname, 'router.config.example.json');
 
 const { routeThinking } = require('./thinking-router.js');
 
