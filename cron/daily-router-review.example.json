@@ -1,0 +1,25 @@
+{
+  "_comment": "Example OpenClaw cron job definition for daily thinking-router auto-review. Copy to OpenClaw cron config and fill in YOUR_SLACK_USER_ID.",
+  "id": "YOUR_JOB_ID",
+  "agentId": "main",
+  "name": "daily-router-review",
+  "enabled": true,
+  "schedule": {
+    "kind": "cron",
+    "expr": "0 3 * * *",
+    "tz": "America/Los_Angeles"
+  },
+  "sessionTarget": "isolated",
+  "wakeMode": "now",
+  "payload": {
+    "kind": "agentTurn",
+    "model": "anthropic/claude-sonnet-4-6",
+    "thinking": "medium",
+    "message": "你是每日 thinking-router 自动优化任务。\n\n## 目标\n检查过去 24 小时（Seattle 时间）的 thinking-router 日志、Slack 交互和现有 heuristics，挖掘可以用小范围 heuristics 修复的问题。不要改动 thinking-router.js、hook handler 或 tier 的核心含义。\n\n## 先读上下文\n1. 读取日志：`tail -n 500 <ROUTER_LOG_PATH>`\n2. 读取当前路由脚本（只读参考）：`<THINKING_ROUTER_SCRIPT_PATH>`\n3. 读取配置：`<ROUTER_CONFIG_PATH>`\n4. 读取语义说明：`<ROUTING_SEMANTICS_PATH>`\n\n## 限制\n- 不要修改 thinking-router.js、hook handler、AGENTS.md、MEMORY.md，所有改动都 stay 在 heuristics 区块。\n- 只调整 heuristics 相关字段：`configMutation`、`intent`、`risk`、`complexity`、`question`、`contextHeavyFollowup`、`explicitLevel`、`explicitPrefixToEngineHint`、`assistantRequest`、`followup`、`diagnosticSticky`、`tiers`、`routeOverride`。\n- 把 overrides 写入 `cron/heuristics.overrides.json`，再运行 `node cron/heuristics-updater.js <ROUTER_CONFIG_PATH> cron/heuristics.overrides.json` 让变更落地。\n\n## 工作步骤\n1. 从日志中识别路由异常：A0/A1/A/B/C 误判、thinking level 跳档太快、high 未触发或高风险路由跑错模型等。\n2. 判断是否可以仅靠 heuristics 修复（高置信度、小范围、容易回退）。\n3. 写入 overrides 再执行 helper：`node cron/heuristics-updater.js <ROUTER_CONFIG_PATH> cron/heuristics.overrides.json`。\n4. 写入 config 后运行 `openclaw gateway restart`，让新的 heuristics 在下一轮 webhook 生效。\n5. 如果不确定、需要大改或 tier 定义本身矛盾，保持 config 不变，输出简短中文建议，说明看到了什么、为什么不改、需要人工 review 哪部分。\n\n## 输出规则\n- 没有更新且不需要人工 review：只输出 `NO_REPLY`。\n- 有更新：用中文简述“改了什么 / 为什么改”。\n- 没有更新但需要人工 review：写短句中文建议。\n- 交付由 cron job 的 delivery 配置负责，请不要额外指示手动 DM。\n\n## Tier 语义（摘要）\n- A0：翻译、改写、超短独立问答、一句话解释\n- A1：独立总结、推荐、草稿、shortlist、轻量比较\n- A：轻量上下文 follow-up\n- B：解释、分析、debug、设计、普通执行规划\n- C：高风险或状态变更执行（prod / security / destructive / trading / config mutation）"
+  },
+  "delivery": {
+    "mode": "announce",
+    "channel": "slack",
+    "to": "YOUR_SLACK_USER_ID"
+  }
+}

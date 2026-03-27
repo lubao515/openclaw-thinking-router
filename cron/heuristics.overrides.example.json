@@ -1,0 +1,21 @@
+{
+  "assistantRequest": {
+    "actionRequest": "(?:你(?:现在|再|先)?(?:发|试|测|跑|贴|开|重启|检查|确认|看|告诉)|再发一次|发了我|我来检查|我来看看|复测|告诉我结果|贴一下结果|开一个(?:全新)?\\s*thread|再贴给我一次)"
+  },
+  "diagnosticSticky": "(?:排查|调试|debug|诊断|router|routing|session|thread|hook|patch|state|gateway|auth|credential|api key|模型|思考强度|dry run|复测|heuristic|启发式|配置|环境变量|堆栈|日志|trace|异常)",
+  "risk": {
+    "patterns": [
+      {
+        "pattern": "(?:新的关键字|例子)",
+        "domain": "ops-risk"
+      }
+    ]
+  },
+  "complexity": [
+    {
+      "pattern": "(?:新的复杂度关键字)",
+      "reason": "analysis",
+      "weight": 1
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Shell syntax check
+        run: bash -n install.sh
+
+      - name: JSON template validation
+        run: |
+          python3 - <<'PY'
+          import json
+          json.load(open('cron/daily-router-review.example.json'))
+          json.load(open('router.config.example.json'))
+          print('JSON_OK')
+          PY
+
+      - name: Load thinking-router module
+        run: node -e "require('./thinking-router.js'); console.log('LOAD_OK')"
+
+      - name: Run regression suite
+        env:
+          ROUTER_ALLOWED_SENDERS: TEST_USER
+        run: node thinking-router-regression.js

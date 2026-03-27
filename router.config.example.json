@@ -1,0 +1,184 @@
+{
+  "_comment": "Copy this file to router.config.json and fill in your values. router.config.json is gitignored.",
+  "allowedSenders": [
+    "YOUR_SLACK_USER_ID"
+  ],
+  "enabledChannels": [
+    "slack"
+  ],
+  "timing": {
+    "manualHoldMinutes": 240,
+    "dedupeMinutes": 5,
+    "stickyMinutes": {
+      "medium": 60,
+      "high": 90
+    },
+    "lowAllowedAfterMinutes": {
+      "high": 60
+    },
+    "contextCarryMinutes": 120,
+    "diagnosticStickyMinutes": 90,
+    "modelHoldMinutes": 120
+  },
+  "patchRetry": {
+    "attempts": 8,
+    "initialDelayMs": 400,
+    "baseDelayMs": 1500,
+    "maxDelayMs": 20000,
+    "jitterMs": 700
+  },
+  "assistantContextScanMessages": 8,
+  "keepStateDays": 30,
+  "keepMaxSessions": 500,
+  "modelPools": [
+    {
+      "id": "pool-1",
+      "weight": 5,
+      "tiers": {
+        "a0-main": "google/gemini-3.1-flash-lite-preview",
+        "a1-main": "openai-codex/gpt-5.1-codex-mini",
+        "a-main": "anthropic/claude-sonnet-4-6",
+        "b-main": "anthropic/claude-sonnet-4-6",
+        "c-main": "anthropic/claude-sonnet-4-6",
+        "main": null
+      }
+    },
+    {
+      "id": "pool-2",
+      "weight": 1,
+      "tiers": {
+        "a0-main": "google/gemini-3.1-flash-lite-preview",
+        "a1-main": "openai-codex/gpt-5.1-codex-mini",
+        "a-main": "openai-codex/gpt-5.4-mini",
+        "b-main": "openai-codex/gpt-5.4-mini",
+        "c-main": "openai-codex/gpt-5.4",
+        "main": null
+      }
+    }
+  ],
+  "heuristics": {
+    "configMutation": {
+      "configSurface": "(?:设置里|配置里|设置|配置|fallback|默认模型|model fallback|default model|provider|auth profile|模型顺序|模型 fallback|模型fallback|模型优先级|fallback 顺序|fallback顺序|model order|模型列表)",
+      "mutationVerb": "(?:改成|设成|设置成|设为|设置为|调成|调到|换成|切到|调整为|改一下|调一下|换一下|更新为|改成这个顺序|按这个顺序|按照这个顺序|按这个顺序排|按照这个顺序排|顺序.*(?:改|调|设|排|换)|排成这个顺序|排一下顺序|重新排序|重排|放到前面|放到后面|提到第一|放第一|放第二|放第三)",
+      "imperative": "^(?:给我把|帮我把|请把|把|直接把|现在把|马上把|替我把|给我改|帮我改|请改|直接改|现在改|马上改)"
+    },
+    "assistantRequest": {
+      "actionRequest": "(?:你(?:现在|再|先)?(?:发|试|测|跑|贴|开|重启|检查|确认|看|告诉)|再发一次|发了我|我来检查|我来看看|复测|告诉我结果|贴一下结果|开一个(?:全新)?\\\\s*thread)",
+      "decisionRequest": "(?:选哪个|方案[一二三AB]吧|你选|二选一|1 还是 2|A 还是 B|下一步选|先做第[一二三]|要不要我|如果你愿意|如果你要|要我继续|要不要继续|如果需要我可以继续|如果你点头我就继续|你决定我就往下做)",
+      "statusRequest": "(?:怎么样了|有结果吗|有进展吗|然后呢|结果发我|回我一下|告诉我有没有|确认一下结果)"
+    },
+    "followup": {
+      "actionConfirmation": "^(?:发了|试了|测了|改了|加了|删了|重启了|设置在环境变量中了|已经好了|弄好了|可以了|貌似可以了|搞定了|完成了)$",
+      "statusUpdate": "^(?:貌似可以了|感觉还是没生效|还是没生效|还是不行|不行|报错了|挂了|好了但|可以了么[?？]?|好了么[?？]?|怎么样了[?？]?|咋样了[?？]?|还有gateway)$",
+      "threadMetaQuestion": "^(?:(?:这个|这条|刚才那个|这次|现在)(?:用的|是用|走的)?(?:是)?|)(?:什么模型|哪个模型|什么回答的|什么模型回答的|用的是什么模型|是用什么模型回答的|这个用的是什么模型|这条用的是什么模型|现在是什么模型|什么思考强度|思考强度是多少|为什么是主模型|为什么还是主模型|为啥还是主模型|为啥不是Gemini|为什么不是Gemini)[?？]?$",
+      "decisionAck": "^(?:可以|可以的|好的|行|要|是的|1|2|3|A|B|方案[一二三AB]吧|用方案A吧|用方案B吧|先做第一件|可以先走第二步)$",
+      "referentialFollowup": "^(?:这两个|这俩|这个|这些|刚才那个|刚才那两个|上面那个|上面那两个|前面那个|前面那两个|那两个)(?:是不是|要不要|应不应该|该不该|能不能|可不可以|是否|该如何|怎么|怎么处理|放在|记到|放到|归档到|记忆里|记忆中|保留|检索)[^\\\\n]*$",
+      "contextFollowup": "^(?:[?？]+|在么[?？]?|在吗[?？]?|在[?？]?|ping[?？]?|好了么[?？]?|好了吗[?？]?|好了没[?？]?|怎么样了[?？]?|咋样了[?？]?|有进展吗[?？]?|进展呢[?？]?|有结果吗[?？]?|结果呢[?？]?|完成了吗[?？]?|完成了没[?？]?|然后呢[?？]?|接下来呢[?？]?|继续|继续吧|继续看|再看下|再看一下|再确认下|再确认一下|确认一下|确认下|ok[?？]?|okay[?？]?|收到|明白|行|好的|装好了吗[?？]?|搞好了吗[?？]?|弄好了吗[?？]?|完了吗[?？]?)$"
+    },
+    "diagnosticSticky": "(?:排查|调试|debug|诊断|router|routing|session|thread|hook|patch|state|gateway|auth|credential|api key|模型|思考强度|dry run|复测|heuristic|启发式|配置|环境变量)",
+    "tiers": {
+      "a0": {
+        "wordingTask": "(?:翻译|改写|润色|措辞|一句话|精简|简化表达|translate|rewrite|rephrase|wording|wordsmith)",
+        "hardTranslation": "^(?:把(?:这句话|这段话|这段文字|下面这句话|下面这段话)?翻译成(?:英文|英语|中文|日文|韩文|法文|德文)|翻译成(?:英文|英语|中文|日文|韩文|法文|德文)[:：]|translate(?: this| the following)?[:：])",
+        "oneLinerExplain": "^(?:一句话解释|一行解释|用一句话解释|one[- ]liner(?: explain)?|briefly explain)"
+      },
+      "a1": {
+        "exclude": "(?:\\\\bA0\\\\b|\\\\bA1\\\\b|\\\\bA\\\\b|\\\\bB\\\\b|\\\\bC\\\\b|thinking|router|route|routing|hook|session|thread|heuristic|规则|模型|思考强度)",
+        "excludeLeads": "^(?:分析|解释|说明|debug|排查|检查)",
+        "include": "(?:总结|概述|推荐|建议|shortlist|选哪个|对比|比较|草稿|draft|shopping|restaurant|怎么选|方案比较|summary|recommend|comparison|优缺点|pros.{0,5}cons|优点和缺点|利弊|好处和坏处|有哪些优势|有哪些劣势|哪些好处|哪些坏处|好在哪|差在哪)"
+      },
+      "a": {
+        "lightweightEdit": "(?:改成项目符号|改成\\\\s*bullet|改成列表|改得更|压缩成|保留核心|不要展开|控制在三点内|删掉最后一段|语气自然一点|语气更温和|更口语一点|更直接一点|更简短一点|更精炼一点|项目符号)"
+      },
+      "b": {
+        "normalExecution": "(?:action items|行动项|RCA 提纲|RCA大纲|提炼成 action items|提炼成行动项|下一步检查顺序|检查顺序|排查顺序|实施步骤|实施提纲|实施计划|变更说明|会议纪要提炼|整理这段错误日志|复盘提纲|验证清单|checklist|阶段计划|分成阶段|API 变更写一版说明|写一版说明|实施步骤)"
+      },
+      "c": {
+        "criticalStateChange": "(?:(?:生产|线上|prod|production).*(?:重置|回滚|迁移|切到|切流|替换|关闭|绕过|改掉|修改|更新|删除|清掉|放行|启用|生效|reload|schema|数据库|告警|门限|证书|secret|secrets)|(?:ssh|2fa|secrets?|secret|证书|私钥|签名校验|安全校验|auth|权限表|bucket|public bucket|防火墙).*(?:关闭|绕过|重置|开放|放行|写进仓库|推上去|改成\\\\s*public|开放给所有人)|(?:市价单|限价单|开仓|平仓|自动平仓|仓位|风控阈值).*(?:自动|直接|立即|立刻|调到\\\\s*0|关闭|启用|生效)|(?:删表|drop table|purge|truncate)|(?:告警规则).*(?:清掉|删除|关闭))"
+      }
+    },
+    "routeOverride": {
+      "systemDomainExplain": "(?:配置|fallback|设置|模型|思考强度|router|routing|session|thread|hook|gateway|auth|credential|Gemini|model)",
+      "debugAuditTask": "(?:检查|排查|解决|修复|debug|看看|审查|验证|核对|看一下|看下|调试|修改|分析)"
+    },
+    "intent": {
+      "explainLead": "^(?:解释一下|解释|说明一下|说明|说说|为什么|为啥|比较一下|比较|分析一下|分析|总结一下|总结|概述一下|概述|梳理一下|梳理|给个草案|给我个草案|帮我理解|展示一下|show me|summari[sz]e|explain|compare|why\\b|meaning\\b|difference\\b)",
+      "draftLead": "^(?:写个|写一版|起草|草拟|draft|帮我写个|帮我写一版).*(?:草稿|draft|说明|公告|更新|总结|brief|提纲)",
+      "inspectLead": "^(?:帮我\\s*(?:debug|排查|检查|看下|看一下|分析|比较|总结|解释|说明|梳理)|debug\\b|排查(?:一下)?|检查(?:一下)?)",
+      "imperativeLead": "^(?:帮我把|请把|直接|立刻|现在就|马上|替我把)",
+      "explain": "(?:看一下|看下|看看|解释|说明|说说|总结|比较|区别|是什么|什么是|为什么|为啥|含义|帮我理解|展示|梳理|给个草案|草案|思路|review|summari[sz]e|explain|show|compare|draft|meaning|why|debug|排查|检查|提纲|action items|行动项)",
+      "storeRecord": "(?:记一下|记录一下|存一下|存下来|把.{0,30}记录|帮我记|记下来)",
+      "execute": "(?:改|修改|应用|启用|禁用|删除|删掉|覆盖|清空|清掉|重启|部署|替换|发送|下单|买入|卖出|开仓|平仓|执行|运行|修复|处理掉|做掉|提交|发布|安装|重装|更新|迁移|回滚|切流|切到|重置|放行|开放给所有人|绕过|关闭校验|跳过检查|上线|生效|reload|开放|接到自动化流程|写进仓库|推上去|apply|enable|disable|delete|remove|overwrite|purge|restart|deploy|replace|send|order|buy|sell|execute|run|fix|install|reinstall|update|patch|rollback|migrate|reset|bypass|reload)"
+    },
+    "risk": {
+      "patterns": [
+        {
+          "pattern": "(?:交易|下单|买入|卖出|开仓|平仓|仓位|止损|止盈|盈亏|风控|风控阈值|市价单|限价单|pdt|broker|trading|order|position|portfolio|risk|信号刷新|刷新信号|交易信号|做多信号|做空信号|买入信号|卖出信号|候选|策略|持仓|多空|做空|做多|买卖|减仓|加仓|regime)",
+          "domain": "trading-risk"
+        },
+        {
+          "pattern": "(?:密码|口令|密钥|token(?!\\s*(?:optimizer|count|budget|limit|window|usage|compression|truncat))|api key|auth|oauth|登录|认证|ssh|权限|安全|security|credential|secret|secrets|2fa|证书|私钥|签名|校验|bucket|public bucket|private bucket|acl)",
+          "domain": "security-risk"
+        },
+        {
+          "pattern": "(?=.*(?:config|配置|设置|cron|webhook|hook|plugin|automatic|自动化|deploy|部署|patch|apply|上线|生产|prod|production|回滚|迁移|schema|数据库|db|告警|告警规则|reload|切流|网关|环境变量|session\\.patch|fallback|默认模型|model fallback|default model|auth profile))(?=.*(?:restart|重启|run|执行|apply|enable|disable|deploy|start|启动|运行|修改|更改|切换|reload|update|install|安装|配置|创建))",
+          "domain": "ops-risk"
+        },
+        {
+          "pattern": "(?:删除|删掉|覆盖|清空|清掉|重置|删表|drop(?:\\s+table)?|purge|truncate|改成\\s*public|开放给所有人|remove|delete|overwrite)",
+          "domain": "destructive-risk"
+        },
+        {
+          "pattern": "(?:账单|扣费|付款|支付失败|支付回调|billing|payment|\\bcharge\\b|bank|brokerage|margin|autopay)",
+          "domain": "billing-risk"
+        }
+      ],
+      "tradingStatusOnly": "^(?:交易(?:日志|报告|状态|记录|结果|摘要)|(?:今日|本次)?(?:运行结果|执行结果|cron结果|定时任务结果)|no candidates?|no signals?|no orders?|未下单|无候选|无信号|无交易|任务完成|执行完成|检查完成|状态正常|运行正常)"
+    },
+    "complexity": [
+      {
+        "pattern": "(?:为什么|原因|排查|调试|debug|诊断|分析|比较|权衡|方案|设计|架构|实现|机制|原理|逻辑|优化|草案|review|draft)",
+        "reason": "analysis",
+        "weight": 2
+      },
+      {
+        "pattern": "(?:\\b(?:thread|session|model|thinking|route|routing|hook|plugin|ws|rpc|worker|state)\\b|session\\.patch)",
+        "reason": "system-mechanics",
+        "weight": 1
+      },
+      {
+        "pattern": "(?:并且|而且|然后|同时|另外|再|先.*再|first.*then|and then|meanwhile)",
+        "reason": "multi-step",
+        "weight": 1
+      },
+      {
+        "pattern": "(?:分别(?:是|代表|对应|说明|指的)|各自(?:是|代表)|依次(?:是|代表)|列举|依次介绍)",
+        "reason": "enumeration-analysis",
+        "weight": 2
+      }
+    ],
+    "question": {
+      "shortQuestion": "(?:[?？]$|是什么时候|是什么|是谁|在哪|哪天|几号|几月几日|多大|多久|何时|when|what|who|where|which|how old)$",
+      "disqualifyContext": "(?:为什么|为啥|咋|怎么|怎麽|原因|分析|比较|区别|方案|设计|调试|排查|架构|实现|路由|模型|thinking|router|session|thread|Gemini|gemini|抽风|切换|意思是|(?:(?:根据|了解|基于|我们)|fallback|(?:分别(?:是|代表|对应|说明|指的)|各自(?:是|代表)|依次(?:是|代表)|列举|依次介绍)))"
+    },
+    "contextHeavyFollowup": "(?:根据你对|根据你|根据我|根据我们|为啥|为什么|怎么|如何|基于上面|基于之前|结合上文|沿用刚才|按刚才|延续这个|这个线程|同一线程|接着上个|上个问题|刚才说的|前面提到|based on (?:above|earlier)|from earlier|in this thread|continue from|一样么|一样吗|相同吗|相同么|那这个呢|^这个呢$|^那个呢$|结论是啥|结论呢|结论是什么|怎么看|怎么理解|有啥区别|有什么区别|(?:对吧(?:[?？])?|是吗(?:[?？])?|是吧(?:[?？])?)$)",
+    "explicitLevel": {
+      "high": "(?:高强度思考|高强度|深度思考|深入思考|认真想|仔细想|好好想|严谨分析|全面分析|认真推演|请认真分析|请深入分析|严谨检查|仔细检查|认真检查|全面检查|严格检查|ultrathink|deep think|deep analysis|think hard|think harder|high effort|high intensity)",
+      "medium": "(?:中等强度|中等思考|普通分析|适中一点|中等分析|medium)",
+      "low": "(?:简单点|简单说|简短点|快速一点|快点|别想太多|不用深想|一句话|只要结论|不用展开|给我命令就行|快速确认|brief|quick|quickly|simple|short|one-liner)"
+    },
+    "explicitPrefixToEngineHint": {
+      "main": "main",
+      "m": "main",
+      "gemini": "a0-main",
+      "g": "a0-main",
+      "review": "a0-main",
+      "r": "a0-main",
+      "a0": "a0-main",
+      "a1": "a1-main",
+      "a": "a-main",
+      "b": "b-main",
+      "c": "c-main"
+    }
+  }
+}
