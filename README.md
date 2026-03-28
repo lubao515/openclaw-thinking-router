@@ -26,7 +26,7 @@ It also supports **model pools** — per-thread weighted random selection betwee
 
 ```bash
 # 1. Clone
-git clone https://github.com/lubao515/thinking-router.git
+git clone https://github.com/lubao515/openclaw-thinking-router.git
 cd thinking-router
 
 # 2. Create your config (gitignored)
