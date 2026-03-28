@@ -372,14 +372,7 @@ const CONFIG = {
     b: 'b-main',
     c: 'c-main',
   },
-  engineModelByHint: {
-    'a0-main': 'google/gemini-3.1-flash-lite-preview',
-    'a1-main': 'openai-codex/gpt-5.1-codex-mini',
-    'a-main': 'anthropic/claude-sonnet-4-6',
-    'b-main': 'anthropic/claude-sonnet-4-6',
-    'c-main': 'anthropic/claude-sonnet-4-6',
-    main: null,
-  },
+  engineModelByHint: { ...DEFAULT_TIER_MODELS },
   tierRank: {},
   tierByLevel: {},
   modelFloor: {
