@@ -99,14 +99,15 @@
     },
     "routeOverride": {
       "systemDomainExplain": "(?:配置|fallback|设置|模型|思考强度|router|routing|session|thread|hook|gateway|auth|credential|Gemini|model)",
+      "contextualExplain": "(?:论文|paper|文章|研究|综述|原理|机制|背景|上下文|之前记录|这篇|那篇|这一篇|这一项)",
       "debugAuditTask": "(?:检查|排查|解决|修复|debug|看看|审查|验证|核对|看一下|看下|调试|修改|分析)"
     },
     "intent": {
-      "explainLead": "^(?:解释一下|解释|说明一下|说明|说说|为什么|为啥|比较一下|比较|分析一下|分析|总结一下|总结|概述一下|概述|梳理一下|梳理|给个草案|给我个草案|帮我理解|展示一下|show me|summari[sz]e|explain|compare|why\\b|meaning\\b|difference\\b)",
+      "explainLead": "^(?:解释一下|解释|讲解一下|讲解|说明一下|说明|说说|为什么|为啥|比较一下|比较|分析一下|分析|总结一下|总结|概述一下|概述|梳理一下|梳理|给个草案|给我个草案|帮我理解|展示一下|show me|summari[sz]e|explain|compare|why\\b|meaning\\b|difference\\b)",
       "draftLead": "^(?:写个|写一版|起草|草拟|draft|帮我写个|帮我写一版).*(?:草稿|draft|说明|公告|更新|总结|brief|提纲)",
       "inspectLead": "^(?:帮我\\s*(?:debug|排查|检查|看下|看一下|分析|比较|总结|解释|说明|梳理)|debug\\b|排查(?:一下)?|检查(?:一下)?)",
       "imperativeLead": "^(?:帮我把|请把|直接|立刻|现在就|马上|替我把)",
-      "explain": "(?:看一下|看下|看看|解释|说明|说说|总结|比较|区别|是什么|什么是|为什么|为啥|含义|帮我理解|展示|梳理|给个草案|草案|思路|review|summari[sz]e|explain|show|compare|draft|meaning|why|debug|排查|检查|提纲|action items|行动项)",
+      "explain": "(?:看一下|看下|看看|解释|讲解|说明|说说|总结|比较|区别|是什么|什么是|为什么|为啥|含义|帮我理解|展示|梳理|给个草案|草案|思路|review|summari[sz]e|explain|show|compare|draft|meaning|why|debug|排查|检查|提纲|action items|行动项)",
       "storeRecord": "(?:记一下|记录一下|存一下|存下来|把.{0,30}记录|帮我记|记下来)",
       "execute": "(?:改|修改|应用|启用|禁用|删除|删掉|覆盖|清空|清掉|重启|部署|替换|发送|下单|买入|卖出|开仓|平仓|执行|运行|修复|处理掉|做掉|提交|发布|安装|重装|更新|迁移|回滚|切流|切到|重置|放行|开放给所有人|绕过|关闭校验|跳过检查|上线|生效|reload|开放|接到自动化流程|写进仓库|推上去|apply|enable|disable|delete|remove|overwrite|purge|restart|deploy|replace|send|order|buy|sell|execute|run|fix|install|reinstall|update|patch|rollback|migrate|reset|bypass|reload)"
     },

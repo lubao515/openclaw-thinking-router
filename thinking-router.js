@@ -99,14 +99,15 @@ function buildDefaultHeuristics() {
     },
     routeOverride: {
       systemDomainExplain: "(?:配置|fallback|设置|模型|思考强度|router|routing|session|thread|hook|gateway|auth|credential|Gemini|model)",
+      contextualExplain: "(?:论文|paper|文章|研究|综述|原理|机制|背景|上下文|之前记录|这篇|那篇|这一篇|这一项)",
       debugAuditTask: "(?:检查|排查|解决|修复|debug|看看|审查|验证|核对|看一下|看下|调试|修改|分析)"
     },
     intent: {
-      explainLead: "^(?:解释一下|解释|说明一下|说明|说说|为什么|为啥|比较一下|比较|分析一下|分析|总结一下|总结|概述一下|概述|梳理一下|梳理|给个草案|给我个草案|帮我理解|展示一下|show me|summari[sz]e|explain|compare|why\\b|meaning\\b|difference\\b)",
+      explainLead: "^(?:解释一下|解释|讲解一下|讲解|说明一下|说明|说说|为什么|为啥|比较一下|比较|分析一下|分析|总结一下|总结|概述一下|概述|梳理一下|梳理|给个草案|给我个草案|帮我理解|展示一下|show me|summari[sz]e|explain|compare|why\\b|meaning\\b|difference\\b)",
       draftLead: "^(?:写个|写一版|起草|草拟|draft|帮我写个|帮我写一版).*(?:草稿|draft|说明|公告|更新|总结|brief|提纲)",
       inspectLead: "^(?:帮我\\s*(?:debug|排查|检查|看下|看一下|分析|比较|总结|解释|说明|梳理)|debug\\b|排查(?:一下)?|检查(?:一下)?)",
       imperativeLead: "^(?:帮我把|请把|直接|立刻|现在就|马上|替我把)",
-      explain: "(?:看一下|看下|看看|解释|说明|说说|总结|比较|区别|是什么|什么是|为什么|为啥|含义|帮我理解|展示|梳理|给个草案|草案|思路|review|summari[sz]e|explain|show|compare|draft|meaning|why|debug|排查|检查|提纲|action items|行动项)",
+      explain: "(?:看一下|看下|看看|解释|讲解|说明|说说|总结|比较|区别|是什么|什么是|为什么|为啥|含义|帮我理解|展示|梳理|给个草案|草案|思路|review|summari[sz]e|explain|show|compare|draft|meaning|why|debug|排查|检查|提纲|action items|行动项)",
       storeRecord: "(?:记一下|记录一下|存一下|存下来|把.{0,30}记录|帮我记|记下来)",
       execute: "(?:改|修改|应用|启用|禁用|删除|删掉|覆盖|清空|清掉|重启|部署|替换|发送|下单|买入|卖出|开仓|平仓|执行|运行|修复|处理掉|做掉|提交|发布|安装|重装|更新|迁移|回滚|切流|切到|重置|放行|开放给所有人|绕过|关闭校验|跳过检查|上线|生效|reload|开放|接到自动化流程|写进仓库|推上去|apply|enable|disable|delete|remove|overwrite|purge|restart|deploy|replace|send|order|buy|sell|execute|run|fix|install|reinstall|update|patch|rollback|migrate|reset|bypass|reload)"
     },
@@ -249,6 +250,7 @@ function compileHeuristicsSpec(spec) {
     },
     routeOverride: {
       systemDomainExplain: compilePattern(spec.routeOverride?.systemDomainExplain),
+      contextualExplain: compilePattern(spec.routeOverride?.contextualExplain),
       debugAuditTask: compilePattern(spec.routeOverride?.debugAuditTask),
     },
     intent: {
@@ -691,6 +693,25 @@ function isDirectSession(sessionKey) {
   return typeof sessionKey === 'string' && sessionKey.includes(':direct:');
 }
 
+/**
+ * Returns true only for a genuine Slack DM thread session key, i.e. keys of the form:
+ *   agent:main:slack:direct:<userId>:thread:<timestamp>
+ * (or similar channel:direct:...:thread:... patterns)
+ *
+ * This guard prevents model-override patches from landing on:
+ *   - agent:main:main (the main/shared session)
+ *   - agent:main:main:thread:<id> (legacy cron-pinned thread keys)
+ *   - agent:main:cron:... (cron sessions)
+ *   - any other non-human-DM session key
+ *
+ * Used to protect sessions.json from cross-session model pollution.
+ */
+function isThreadedDirectSession(sessionKey) {
+  if (typeof sessionKey !== 'string') return false;
+  // Must have :direct: AND :thread:
+  return sessionKey.includes(':direct:') && sessionKey.includes(':thread:');
+}
+
 function isCronSession(sessionKey) {
   return typeof sessionKey === 'string' && sessionKey.includes(':cron:');
 }
@@ -866,6 +887,9 @@ function isVeryShortStandaloneQA(text, classified = {}, sessionState = {}) {
   if (complexityScore >= 2) return false;
   if (hasExplicitEnginePrefix(normalized)) return false;
   if (/^\//.test(normalized)) return false;
+
+  const contextualExplainPattern = CONFIG.heuristics?.routeOverride?.contextualExplain;
+  if (contextualExplainPattern?.test(normalized)) return false;
 
   const questionHeuristics = CONFIG.heuristics?.question;
   const shortQuestionPattern = questionHeuristics?.shortQuestion;
@@ -1276,6 +1300,7 @@ function classifyEngineRoute(rawText, classifiedThinking = {}, options = {}) {
   if (intent === 'explain' || intent === 'neutral') {
     const routeOverride = CONFIG.heuristics?.routeOverride;
     const systemDomainExplainPattern = routeOverride?.systemDomainExplain;
+    const contextualExplainPattern = routeOverride?.contextualExplain;
     const debugAuditPattern = routeOverride?.debugAuditTask;
 
     // System/config-domain explain questions should not fall to A0 — route to B
@@ -1283,6 +1308,13 @@ function classifyEngineRoute(rawText, classifiedThinking = {}, options = {}) {
       return {
         engineHint: CONFIG.tiers.b,
         reasons: ['system-domain-explain-b-route'],
+      };
+    }
+    // Context-heavy explain questions (e.g. paper walkthroughs) should also avoid A0 hard-route.
+    if (contextualExplainPattern?.test(text)) {
+      return {
+        engineHint: CONFIG.tiers.b,
+        reasons: ['contextual-explain-b-route'],
       };
     }
     // Longer debug/fix/audit tasks (len>30) should not fall to A0 — route to A minimum
@@ -1340,6 +1372,12 @@ function classifyThinkingLevel(rawText) {
   const systemExplainPattern = CONFIG.heuristics?.routeOverride?.systemDomainExplain;
   if (systemExplainPattern?.test(text) && (intent === 'explain' || intent === 'neutral')) {
     pushReason(reasons, 'system-domain-explain');
+    return { level: 'medium', reasons, explicitLevel, intent, riskDomains: risk.domains, complexityScore: complexity.score };
+  }
+
+  const contextualExplainPattern = CONFIG.heuristics?.routeOverride?.contextualExplain;
+  if (contextualExplainPattern?.test(text) && (intent === 'explain' || intent === 'neutral')) {
+    pushReason(reasons, 'contextual-explain');
     return { level: 'medium', reasons, explicitLevel, intent, riskDomains: risk.domains, complexityScore: complexity.score };
   }
 
@@ -1674,6 +1712,17 @@ function queuePatchSession({ sessionKey, patch }) {
  */
 async function inlinePatchSessionAsync({ sessionKey, patch }) {
   if (!patch || typeof patch !== 'object') return { ok: false, reason: 'no-patch' };
+
+  // Guard: model override must only be applied to genuine threaded DM sessions.
+  // Applying modelOverride to agent:main:main or cron/legacy thread keys would
+  // pollute sessions.json and cause LiveSessionModelSwitchError in cron jobs that
+  // (mis)share those session keys.
+  if (patch.model !== undefined && !isThreadedDirectSession(sessionKey)) {
+    appendLog(`[thinking-router] inline-patch model SKIP session=${sessionKey} reason=non-threaded-direct-session model=${JSON.stringify(patch.model)}`);
+    const { model: _dropped, ...patchWithoutModel } = patch;
+    patch = patchWithoutModel;
+    if (Object.keys(patch).length === 0) return { ok: true, skipped: true, reason: 'non-threaded-direct-session-model-only' };
+  }
 
   const results = {};
 
@@ -2099,6 +2148,14 @@ function routeThinking(input, options = {}) {
         model: modelDecision.model,
         modelPoolId: modelDecision.poolId || null,
       };
+    }
+
+    // Guard: strip model from patch if sessionKey is not a genuine threaded DM session.
+    // This prevents the detached worker from writing modelOverride onto shared/main/cron keys.
+    if (Object.prototype.hasOwnProperty.call(patch, 'model') && !isThreadedDirectSession(sessionKey)) {
+      appendLog(`[thinking-router] queued-patch model STRIPPED session=${sessionKey} reason=non-threaded-direct-session model=${JSON.stringify(patch.model)}`);
+      const { model: _dropped, ...patchWithoutModel } = patch;
+      patch = patchWithoutModel;
     }
 
     if (!dryRun) {
