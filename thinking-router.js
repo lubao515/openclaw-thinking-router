@@ -1166,6 +1166,12 @@ function shouldCarryContextFollowup({ sessionState, text, classified, now, assis
     return { carry: false, reason: 'followup-window-expired', assistantRequestKind };
   }
 
+  const classifiedLevel = LEVEL_RANK[classified?.level] ? classified.level : 'low';
+  const carryLevel = rank(classifiedLevel) > rank(anchorLevel) ? classifiedLevel : anchorLevel;
+  const carryEngineHint = rank(classifiedLevel) > rank(anchorLevel)
+    ? engineHintFromLevel(classifiedLevel)
+    : (sessionState?.contextAnchorEngineHint || sessionState?.lastEngineHint || engineHintFromLevel(anchorLevel));
+
   let carryReason = 'context-followup-no-rollback';
   if (actionDrivenCarry) carryReason = `assistant-${assistantRequestKind}`;
   else if (isDiagnosticStickyActive(sessionState, now) && (actionConfirmation || statusUpdate || decisionAck)) carryReason = 'diagnostic-sticky-followup';
@@ -1173,17 +1179,27 @@ function shouldCarryContextFollowup({ sessionState, text, classified, now, assis
   else if (statusUpdate) carryReason = 'status-update-followup';
   else if (decisionAck) carryReason = 'decision-ack-followup';
   else if (referentialFollowup) carryReason = 'referential-followup';
+  if (carryLevel !== anchorLevel) carryReason = 'context-followup-upgrade';
 
   return {
     carry: true,
     reason: carryReason,
-    level: anchorLevel,
-    engineHint: sessionState?.contextAnchorEngineHint || sessionState?.lastEngineHint || engineHintFromLevel(anchorLevel),
+    level: carryLevel,
+    engineHint: carryEngineHint,
     assistantRequestKind,
     actionConfirmation,
     statusUpdate,
     decisionAck,
   };
+}
+
+function shouldPromoteDiagnosticStickyMedium({ classified, diagnosticSticky }) {
+  if (!diagnosticSticky) return false;
+  if (classified?.level !== 'low') return false;
+  if (classified?.intent === 'explain' || classified?.intent === 'mixed') return true;
+  if (Number(classified?.complexityScore || 0) >= 2) return true;
+  if (Array.isArray(classified?.riskDomains) && classified.riskDomains.length > 0) return true;
+  return false;
 }
 
 function engineHintFromLevel(level) {
@@ -2003,9 +2019,12 @@ function routeThinking(input, options = {}) {
   const diagnosticSticky = shouldEnableDiagnosticSticky(text, classified) || isDiagnosticStickyActive(sessionState, now);
   const contextCarry = shouldCarryContextFollowup({ sessionState, text, classified, now, assistantContext });
 
-  const targetLevel = contextCarry.carry
+  const carryLevel = contextCarry.carry
     ? (contextCarry.level || sessionState.contextAnchorLevel || sessionState.lastAppliedLevel || classified.level)
     : classified.level;
+  const targetLevel = shouldPromoteDiagnosticStickyMedium({ classified, diagnosticSticky }) && rank(carryLevel) < rank('medium')
+    ? 'medium'
+    : carryLevel;
 
   let engineRoute = classifyEngineRoute(text, {
     ...classified,
@@ -2018,8 +2037,11 @@ function routeThinking(input, options = {}) {
   });
 
   if (contextCarry.carry) {
+    const carryEngineHint = rank(targetLevel) > rank(carryLevel)
+      ? engineHintFromLevel(targetLevel)
+      : (contextCarry.engineHint || sessionState.contextAnchorEngineHint || sessionState.lastEngineHint || engineHintFromLevel(targetLevel));
     engineRoute = {
-      engineHint: contextCarry.engineHint || sessionState.contextAnchorEngineHint || sessionState.lastEngineHint || engineHintFromLevel(targetLevel),
+      engineHint: carryEngineHint,
       reasons: [...(engineRoute.reasons || []), contextCarry.reason],
     };
   }

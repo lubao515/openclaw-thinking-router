@@ -189,12 +189,21 @@ const cases = [
     },
     expect: { level: 'high', engineHint: 'c-main' },
   },
+  {
+    name: 'diagnostic sticky follow-up should be allowed to upgrade from low to medium',
+    text: '其他 job 都好了。为什么这个报错还在？',
+    setup: {
+      sessionState: makeSessionState({ level: 'low', engineHint: 'a-main', minutesAgo: 1, diagnosticMinutes: 180 }),
+      assistantText: '继续看下这个 routing 问题。',
+    },
+    expect: { level: 'medium', engineHint: 'b-main' },
+  },
 ];
 
 let failed = 0;
 
 for (const [index, testCase] of cases.entries()) {
-  const sessionKey = `agent:main:slack:direct:u0ah304q7fw:thread:router-regression-${index}`;
+  const sessionKey = `agent:main:slack:direct:sample-user:thread:router-regression-${index}`;
   if (testCase.setup) {
     seedFixture({ sessionKey, ...testCase.setup });
   }
